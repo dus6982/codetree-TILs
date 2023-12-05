@@ -89,8 +89,7 @@ public class Main {
 			
 			if(!santa.out && santa.faint) {
 				if(santa.turn==M) {
-					santa.faint = false;
-					santa.turn = M;
+					updateInfoSanta(santa, santa.r, santa.c, santa.direct, false);
 				} else {
 					continue;
 				}
