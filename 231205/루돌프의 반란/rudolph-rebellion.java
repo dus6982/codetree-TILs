@@ -199,15 +199,16 @@ public class Main {
 				if(check(nnr, nnc)) {
 					while(map[nnr][nnc]!=0) {
 						cnt++;
-						nnr += drS[d];
-						nnc += dcS[d];
+						nnr -= drS[d];
+						nnc -= dcS[d];
 						
 						if(!check(nnr, nnc)) {
-							nnr -= drS[d];
-							nnc -= dcS[d];
+							nnr += drS[d];
+							nnc += dcS[d];
 							
 							int die_idx = map[nnr][nnc];
 							dieSanta(die_idx);
+							cnt--;
 							
 							break;
 						}
