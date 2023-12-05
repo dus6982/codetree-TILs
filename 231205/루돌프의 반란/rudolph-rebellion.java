@@ -233,7 +233,7 @@ public class Main {
 						int move_idx = map[nnr+(drR[rdp_d]*(-1))][nnc+(dcR[rdp_d]*(-1))];
 						map[nnr][nnc] = move_idx;
 						Santa s = findInfoSanta(move_idx);
-						updateInfoSanta(s, nnr, nnc, rdp_d, true);
+						updateInfoSanta(s, nnr, nnc, rdp_d, false);
 						
 						nnr = nnr+(drR[rdp_d]*(-1));
 						nnc = nnc+(dcR[rdp_d]*(-1));
