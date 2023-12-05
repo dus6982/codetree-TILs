@@ -269,13 +269,11 @@ public class Main {
 			 //범위 안 벗어나면 이동할 수 있는 것이란돠
 			if(map[nr][nc]==0) { 
 				//이동할 수 있는 칸에 아무도 없다면 연쇄 없이 이동 가능
-				System.out.println("==연쇄 없음");
 				map[nr][nc] = santa.idx;
 				map[santa.r][santa.c] = 0;
 				//산타 정보 수정
 				updateInfoSanta(santa, nr, nc, d, true);
 			} else {
-				System.out.println("==연쇄 있음");
 				//해당 이동방향대로 1칸씩 연쇄 이동
 				int cnt = 1;
 				
