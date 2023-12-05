@@ -52,7 +52,9 @@ public class Main {
 		
 		while(M-- > 0) {
 			//산타가 없으면 종료
-			if(live==0) break;
+			if(live==0) {
+				break;
+			}
 			
 			//1. 루돌프 이동
 			//루돌프와 가장 가까운 산타 찾기
@@ -70,35 +72,67 @@ public class Main {
 				}
 			}
 		}
-
+		
 		for(int i=1; i<score.length; i++) {
 			System.out.print(score[i]+" ");
 		}
 	}
-	
-	private static Santa findNearSanta() {
-		int min_dist = N*N+M*M; //최대 거리
-		Santa near = null;
+
+	private static void moveSanta() {
+		//번호 순서대로 산타 이동 해야 됨
+		//번호로 리스트 정렬하기
+		Collections.sort(santas);
 		
 		for(Santa santa : santas) {
 			//죽은 산타는 x
 			if(santa.out) continue;
 			
-			int dist = (int) (Math.pow(rdp_r-santa.r,2) + Math.pow(rdp_c-santa.c, 2));
-			if(min_dist > dist) {
-				min_dist = dist;
-				near = santa;
-			} else if(min_dist == dist) {
-				//r좌표가 커
-				//r좌표가 같을 때는 c좌표가 커
-				if(santa.r > near.r || (santa.r==near.r && santa.c > near.c)) {
-					near = santa;
+			if(!santa.out && santa.faint) {
+				if(santa.turn==M) {
+					santa.faint = false;
+					santa.turn = M;
+				} else {
+					continue;
 				}
 			}
+			
+			//움직일 수 있는 4칸 중 루돌프와 가까워지는 칸으로 1칸 이동	
+			int move_r = -1, move_c = -1;
+			int min_dist = (int) (Math.pow(rdp_r-santa.r,2) + Math.pow(rdp_c-santa.c, 2));
+			
+			for(int d=0; d<4; d++) {
+				int nr = santa.r+drS[d];
+				int nc = santa.c+dcS[d];
+				
+				//범위 벗어나면 이동불가
+				if(!check(nr, nc)) continue;
+				
+				//루돌프면 충돌 ~~
+				if(map[nr][nc]==-1) {
+					crashSanta(santa, nr, nc, d);
+					break;
+				}
+				
+				//누가 있으면 이동불가
+				if(map[nr][nc]!=0) continue;
+				
+				int dist = (int) (Math.pow(nr-rdp_r,2) + Math.pow(nc-rdp_c, 2));
+				if(min_dist > dist) {
+					santa.direct = d;
+					min_dist = dist;
+					move_r = nr; move_c = nc;
+				}
+			}
+			
+			if(move_r != -1 && move_c != -1) {
+				map[santa.r][santa.c] = 0;
+				map[move_r][move_c] = santa.idx;
+				updateInfoSanta(santa, move_r, move_c, santa.direct, false);
+			}
 		}
-
-		return near;
 	}
+
+	
 
 	private static void moveRdp(Santa near) {
 		int move_r = 0, move_c = 0;
@@ -125,132 +159,10 @@ public class Main {
 		if(map[move_r][move_c]!=0) {
 			crashRdp(move_r, move_c);
 		} 
-		
+
 		map[rdp_r][rdp_c] = 0;
 		map[move_r][move_c] = -1;
 		rdp_r = move_r; rdp_c = move_c;
-	}
-
-	private static void moveSanta() {
-		//번호 순서대로 산타 이동 해야 됨
-		//번호로 리스트 정렬하기
-		Collections.sort(santas);
-		
-		for(Santa santa : santas) {
-			//죽은 산타는 x
-			if(santa.out) continue;
-			
-			if(santa.faint) {
-				if(santa.turn==M) {
-					santa.faint = false;
-					santa.turn = M;
-				} else {
-					continue;
-				}
-			}
-			
-			//움직일 수 있는 4칸 중 루돌프와 가까워지는 칸으로 1칸 이동			
-			int move_r = -1, move_c = -1;
-			int min_dist = (int) (Math.pow(rdp_r-santa.r,2) + Math.pow(rdp_c-santa.c, 2));
-			
-			for(int d=0; d<4; d++) {
-				int nr = santa.r+drS[d];
-				int nc = santa.c+dcS[d];
-				
-				//범위 벗어나면 이동불가
-				if(!check(nr, nc)) continue;
-				
-				//루돌프면 충돌 ~~
-				if(map[nr][nc]==-1) {
-					crashSanta(santa, nr, nc, d);
-				}
-				
-				//누가 있으면 이동불가
-				if(map[nr][nc]!=0) continue;
-				
-				int dist = (int) (Math.pow(nr-rdp_r,2) + Math.pow(nc-rdp_c, 2));
-				if(min_dist > dist) {
-					santa.direct = d;
-					min_dist = dist;
-					move_r = nr; move_c = nc;
-				}
-			}
-			
-			if(move_r != -1 && move_c != -1) {
-				map[santa.r][santa.c] = 0;
-				map[move_r][move_c] = santa.idx;
-				updateInfoSanta(santa, move_r, move_c, santa.direct, false);
-			}
-		}
-	}
-	
-	private static void crashRdp(int move_r, int move_c) {
-		//루돌프가 이동해서 산타와 충돌
-		//해당 칸에 있는 산타는 C점 획득
-		int idx = map[move_r][move_c];
-		score[idx] += C;
-		
-		//루돌프의 이동방향대로 C칸 밀려날 거얌
-		//움직이게 될 산타의 정보를 가져오자
-		Santa santa = findInfoSanta(idx);
-		
-		int nr = santa.r+(drR[rdp_d]*C);
-		int nc = santa.c+(dcR[rdp_d]*C);
-		
-		if(check(nr, nc)) { //범위 안 벗어나면 이동할 수 있는 것이란돠
-			if(map[nr][nc]==0) { 
-				//이동할 수 있는 칸에 아무도 없다면 연쇄 없이 이동 가능
-				map[nr][nc] = santa.idx;
-				map[santa.r][santa.c] = 0;
-				//산타 정보 수정
-				updateInfoSanta(santa, nr, nc, rdp_d, true);
-			} else {
-				//루돌프 이동방향대로 1칸씩 연쇄 이동
-				int cnt = 1;
-				
-				int nnr = nr+drR[rdp_d];
-				int nnc = nc+dcR[rdp_d];
-				
-				if(check(nnr, nnc)) {
-					while(map[nnr][nnc]!=0) {
-						cnt++;
-						nnr += drR[rdp_d];
-						nnc += dcR[rdp_d];
-						
-						if(!check(nnr, nnc)) {
-							nnr -= drR[rdp_d];
-							nnc -= dcR[rdp_d];
-							
-							int die_idx = map[nnr][nnc];
-							dieSanta(die_idx);
-							
-							break;
-						}
-					}
-					
-					for(int i=1; i<=cnt; i++) {
-						//앞 칸의 값을 넣어주기
-						int move_idx = map[nnr+(drR[rdp_d]*(-1))][nnc+(dcR[rdp_d]*(-1))];
-						map[nnr][nnc] = move_idx;
-						Santa s = findInfoSanta(move_idx);
-						updateInfoSanta(s, nnr, nnc, rdp_d, false);
-						
-						nnr = nnr+(drR[rdp_d]*(-1));
-						nnc = nnc+(dcR[rdp_d]*(-1));
-					}
-				} else { //범위 밖으로 튕겨나가 죽엉
-					int die_idx = map[nr][nc];
-					dieSanta(die_idx);
-				}
-				
-				
-				//연쇄 끝났으니 첫번째로 치인 산타를 이동시켜주자
-				map[nr][nc] = santa.idx;
-				updateInfoSanta(santa, nr, nc, rdp_d, true);
-			}
-		} else { //범위 벗어났으면 산타 die
-			dieSanta(santa.idx);
-		}
 	}
 
 	private static void crashSanta(Santa santa, int r_r, int r_c, int d) {
@@ -295,13 +207,12 @@ public class Main {
 							nnc -= dcS[d];
 							
 							int die_idx = map[nnr][nnc];
-							Santa s =findInfoSanta(die_idx);
-							santas.remove(s);
+							dieSanta(die_idx);
 							
 							break;
 						}
 					}
-					
+
 					for(int i=1; i<=cnt; i++) {
 						//앞 칸의 값을 넣어주기
 						int move_idx = map[nnr+drS[d]][nnc+dcS[d]];
@@ -320,6 +231,7 @@ public class Main {
 				
 				//연쇄 끝났으니 첫번째로 치인 산타를 이동시켜주자
 				map[nr][nc] = santa.idx;
+				map[santa.r][santa.c] = 0;
 				updateInfoSanta(santa, nr, nc, rdp_d, true);
 			}
 		
@@ -343,6 +255,77 @@ public class Main {
 		live--;
 		
 		santas.set(idx, s);
+	}
+
+	private static void crashRdp(int move_r, int move_c) {
+		//루돌프가 이동해서 산타와 충돌
+		//해당 칸에 있는 산타는 C점 획득
+		int idx = map[move_r][move_c];
+		score[idx] += C;
+		
+		//루돌프의 이동방향대로 C칸 밀려날 거얌
+		//움직이게 될 산타의 정보를 가져오자
+		Santa santa = findInfoSanta(idx);
+		
+		int nr = santa.r+(drR[rdp_d]*C);
+		int nc = santa.c+(dcR[rdp_d]*C);
+		
+		if(check(nr, nc)) { //범위 안 벗어나면 이동할 수 있는 것이란돠
+			if(map[nr][nc]==0) { 
+				//이동할 수 있는 칸에 아무도 없다면 연쇄 없이 이동 가능
+				map[nr][nc] = santa.idx;
+				map[santa.r][santa.c] = 0;
+				//산타 정보 수정
+				updateInfoSanta(santa, nr, nc, rdp_d, true);
+			} else {
+				//루돌프 이동방향대로 1칸씩 연쇄 이동
+				int cnt = 1;
+				
+				int nnr = nr+drR[rdp_d];
+				int nnc = nc+dcR[rdp_d];
+				
+				if(check(nnr, nnc)) {
+					while(map[nnr][nnc]!=0) {
+						cnt++;
+						nnr += drR[rdp_d];
+						nnc += dcR[rdp_d];
+						
+						if(!check(nnr, nnc)) {
+							nnr -= drR[rdp_d];
+							nnc -= dcR[rdp_d];
+							
+							int die_idx = map[nnr][nnc];
+							dieSanta(die_idx);
+							cnt--;
+							break;
+						}
+					}
+					
+					for(int i=1; i<=cnt; i++) {
+						//앞 칸의 값을 넣어주기
+						int move_idx = map[nnr+(drR[rdp_d]*(-1))][nnc+(dcR[rdp_d]*(-1))];
+						map[nnr][nnc] = move_idx;
+						
+						//산타에게 밀려나는 것은 기절 x
+						Santa s = findInfoSanta(move_idx);
+						updateInfoSanta(s, nnr, nnc, rdp_d, false);
+						
+						nnr = nnr+(drR[rdp_d]*(-1));
+						nnc = nnc+(dcR[rdp_d]*(-1));
+					}
+				} else { //범위 밖으로 튕겨나가 죽엉
+					int die_idx = map[nr][nc];
+					dieSanta(die_idx);
+				}
+				
+				
+				//연쇄 끝났으니 첫번째로 치인 산타를 이동시켜주자
+				map[nr][nc] = santa.idx;
+				updateInfoSanta(santa, nr, nc, rdp_d, true);
+			}
+		} else { //범위 벗어났으면 산타 die
+			dieSanta(santa.idx);
+		}
 	}
 
 	private static void updateInfoSanta(Santa santa, int nr, int nc, int d, boolean crash) {
@@ -380,6 +363,30 @@ public class Main {
 		return null;
 	}
 
+	private static Santa findNearSanta() {
+		int min_dist = N*N+N*N; //최대 거리
+		Santa near = null;
+		
+		for(Santa santa : santas) {
+			//죽은 산타는 x
+			if(santa.out) continue;
+			
+			int dist = (int) (Math.pow(rdp_r-santa.r,2) + Math.pow(rdp_c-santa.c, 2));
+			if(min_dist > dist) {
+				min_dist = dist;
+				near = santa;
+			} else if(min_dist == dist) {
+				//r좌표가 커
+				//r좌표가 같을 때는 c좌표가 커
+				if(santa.r > near.r || (santa.r==near.r && santa.c > near.c)) {
+					near = santa;
+				}
+			}
+		}
+		
+		return near;
+	}
+
 	static class Santa implements Comparable<Santa>{
 		int idx;
 		int r;
@@ -387,7 +394,7 @@ public class Main {
 		int direct; //방향
 		boolean faint; //t:기절, f:x-이동가능
 		int turn; //T일 시, 움직일 수 있는 턴 숫자
-		boolean out;
+		boolean out; //t:죽음
 		
 		public Santa(int idx, int r, int c, int direct, boolean faint, int turn, boolean out) {
 			super();
