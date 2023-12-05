@@ -89,7 +89,8 @@ public class Main {
 			
 			if(!santa.out && santa.faint) {
 				if(santa.turn==M) {
-					updateInfoSanta(santa, santa.r, santa.c, santa.direct, false);
+					santa.faint = false;
+					santa.turn = M;
 				} else {
 					continue;
 				}
@@ -218,7 +219,7 @@ public class Main {
 						int move_idx = map[nnr+drS[d]][nnc+dcS[d]];
 						map[nnr][nnc] = move_idx;
 						Santa s = findInfoSanta(move_idx);
-						updateInfoSanta(s, nnr, nnc, d, false);
+						updateInfoSanta(s, nnr, nnc, d, s.faint);
 						
 						nnr = nnr+drS[d];
 						nnc = nnc+dcS[d];
@@ -297,21 +298,22 @@ public class Main {
 							int die_idx = map[nnr][nnc];
 							dieSanta(die_idx);
 							cnt--;
+							
 							break;
 						}
 					}
 					
 					for(int i=1; i<=cnt; i++) {
 						//앞 칸의 값을 넣어주기
-						int move_idx = map[nnr+(drR[rdp_d]*(-1))][nnc+(dcR[rdp_d]*(-1))];
+						int move_idx = map[nnr-drR[rdp_d]][nnc-dcR[rdp_d]];
 						map[nnr][nnc] = move_idx;
 						
 						//산타에게 밀려나는 것은 기절 x
 						Santa s = findInfoSanta(move_idx);
-						updateInfoSanta(s, nnr, nnc, rdp_d, false);
+						updateInfoSanta(s, nnr, nnc, rdp_d, s.faint);
 						
-						nnr = nnr+(drR[rdp_d]*(-1));
-						nnc = nnc+(dcR[rdp_d]*(-1));
+						nnr -= drR[rdp_d];
+						nnc -= dcR[rdp_d];
 					}
 				} else { //범위 밖으로 튕겨나가 죽엉
 					int die_idx = map[nr][nc];
