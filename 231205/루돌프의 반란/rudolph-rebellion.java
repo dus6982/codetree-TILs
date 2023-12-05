@@ -263,7 +263,11 @@ public class Main {
 		int nc = r_c+(dcS[d]*(-1)*D);
 		
 		//원래 내 자리
-		if(nr==santa.r && nc==santa.c) return;
+		if(nr==santa.r && nc==santa.c) {
+			//산타 정보 수정
+			updateInfoSanta(santa, nr, nc, d, true);
+			return;
+		}
 		
 		if(check(nr, nc)) { //범위 안 벗어나면 이동할 수 있는 것이란돠
 			 //범위 안 벗어나면 이동할 수 있는 것이란돠
