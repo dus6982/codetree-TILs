@@ -324,6 +324,7 @@ public class Main {
 			}
 		
 		} else { //범위 밖으로 튕겨나가 죽엉
+			map[santa.r][santa.c] = 0;
 			dieSanta(santa.idx);
 		}
 		
@@ -338,7 +339,7 @@ public class Main {
 			}
 		}
 		
-		Santa s = new Santa(die_idx, 0, 0, 0, true, P, true);
+		Santa s = new Santa(die_idx, 0, 0, 0, true, M, true);
 		live--;
 		
 		santas.set(idx, s);
