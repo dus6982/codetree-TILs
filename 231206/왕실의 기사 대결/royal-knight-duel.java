@@ -189,6 +189,7 @@ public class Main {
 		
 		for(int i=1; i<move.length; i++) {
 			Knight kn = knights[i];
+			int dp = 0;
 			
 			if(!move[i]) {
 				for(int r=kn.r; r<kn.r+kn.h; r++) {
@@ -202,20 +203,23 @@ public class Main {
 						kmap[r+dr[d]][c+dc[d]] = i;
 						
 						if(i==idx) continue;
-						if(map[r+dr[d]][c+dc[d]]==1) dmg[i]++;
+						if(map[r+dr[d]][c+dc[d]]==1) {
+							dmg[i]++;
+							dp++;
+						}
 					}
 				}
 				
 				//이동된 좌표 반영해주고 데미지
-				updateInfo(kn, d, i);
+				updateInfo(kn, d, i, dp);
 			}
 		}
 	}
 
-	private static void updateInfo(Knight kn, int d, int idx) {
+	private static void updateInfo(Knight kn, int d, int idx, int dp) {
 		kn.r = kn.r+dr[d];
 		kn.c = kn.c+dc[d];
-		kn.hp -= dmg[idx];
+		kn.hp -= dp;
 		
 		//죽었으면 맵에서 없애주기
 		if(kn.hp<=0) {
