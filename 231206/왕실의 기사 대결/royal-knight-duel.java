@@ -11,7 +11,6 @@ public class Main {
 	static int[] dmg; //각 기사가 받은 데미지
 	static int[] dr = {-1, 0, 1, 0}; //상우하좌
 	static int[] dc = {0, 1, 0,-1};
-	static int lastIdx;
 	static boolean[] move; // 한 턴에 움직여줘야 되는 기사 번호
 
 	public static void main(String[] args) throws IOException {
@@ -51,8 +50,9 @@ public class Main {
 				}
 			}
 		}
-
+		
 		//Q개의 명령 진행
+		int cnt = 1;
 		while(Q-- > 0) {
 			st = new StringTokenizer(br.readLine());
 			int idx = Integer.parseInt(st.nextToken());
@@ -82,56 +82,23 @@ public class Main {
 		int sr = knight.r; int sc = knight.c; 
 		int er = sr+knight.h; int ec = sc+knight.w;
 		
-		boolean flag = false;
-		
-		//d로 한 칸 이동
-		int cnt = 0;
-		if(d==0 || d==2) cnt = knight.w;
-		else cnt = knight.h;
-		
 		for(int r=sr; r<er; r++) {
 			for(int c=sc; c<ec; c++) {
 				int nr = r+dr[d];
 				int nc = c+dc[d];
 				
-				if(!check(nr, nc)) {
-					return;
-				}
+				if(!check(nr, nc) || map[nr][nc]==2) return;
 				
 				//다음 칸이 자기 자신이면 넘어가기
-				if(kmap[nr][nc]==idx) continue;
-				
-				//벽인지 확인하기 - 벽이면 이동 불가
-				if(map[nr][nc]==2) {
-					flag = true;
-					break;
-				}
-				
-				//연쇄 없이 이동 가능
-				if(kmap[nr][nc]==0) {
-					cnt--;
-					continue;
-				} else if(kmap[nr][nc]!=0) { //바로 이동하지 못하고 누가 존재해서 밀어조야함
+				if(kmap[nr][nc]!=idx && kmap[nr][nc]!=0){ //바로 이동하지 못하고 누가 존재해서 밀어조야함
 					//전부 이동할 수 있어야 움직이는 것이다
-						if(movePossible(kmap[nr][nc], d)) {
-							cnt--;
-							continue;
-						} else { //연쇄 받는 기사가 한 명이라도 움직이지 못한다면 이동 못함
-							flag = true;
-							break;
-						}
-					
+					if(!movePossible(kmap[nr][nc], d)) return;
 				}
 			}
 		}
 		
-		if(flag || cnt!=0) {
-			move = new boolean[N+1];
-		}
-		
-		if(cnt==0) { //모든 기사 이동 가능해짐
-			moveAll(d, idx);
-		}
+		//모든 기사 이동 가능해짐
+		moveAll(d, idx);
 	}
 	
 	private static boolean movePossible(int idx, int d) {
@@ -140,48 +107,22 @@ public class Main {
 		Knight knight = knights[idx];
 		int sr = knight.r; int sc = knight.c; 
 		int er = sr+knight.h; int ec = sc+knight.w;
-		
-		int cnt = 0;
-		if(d==0 || d==2) cnt = knight.w;
-		else cnt = knight.h;
-		
+
 		for(int r=sr; r<er; r++) {
 			for(int c=sc; c<ec; c++) {
 				int nr = r+dr[d];
 				int nc = c+dc[d];
 				
-				if(!check(nr, nc)) {
-					return false;
-				}
-				
-				//다음 칸이 자기 자신이면 넘어가기
-				if(kmap[nr][nc]==idx) continue;
-				
+				if(!check(nr, nc) || map[nr][nc]==2) return false;
+
 				//연쇄 없이 이동 가능(누가 없고 벽도 아니면)
-				if(kmap[nr][nc]==0 && map[nr][nc]!=2) {
-					cnt--;
-					continue;
-				}
-				
-				//벽이면 이동 불가
-				if(map[nr][nc]==2) {
-					return false;
-				}
-				
-				if(kmap[nr][nc]!=idx) {
-					if(movePossible(kmap[nr][nc], d)) {
-						cnt--;
-					}
+				if(kmap[nr][nc]!=idx && kmap[nr][nc]!=0) {
+					if(!movePossible(kmap[nr][nc], d)) return false;
 				}
 			}
 		}
 		
-		//모든 칸이 이동가능하다 ~~
-		if(cnt==0) {
-			return true;
-		} else {
-			return false;
-		}
+		return true;
 	}
 
 	private static void moveAll(int d, int idx) {
@@ -190,6 +131,8 @@ public class Main {
 		for(int i=1; i<move.length; i++) {
 			Knight kn = knights[i];
 			int dp = 0;
+			
+			if(kn.hp<=0) continue;
 			
 			if(!move[i]) {
 				for(int r=kn.r; r<kn.r+kn.h; r++) {
@@ -202,10 +145,12 @@ public class Main {
 					for(int c=kn.c; c<kn.c+kn.w; c++) {
 						kmap[r+dr[d]][c+dc[d]] = i;
 						
-						if(i==idx) continue;
-						if(map[r+dr[d]][c+dc[d]]==1) {
-							dmg[i]++;
-							dp++;
+						//명령 받아서 움직인 친구는 데미지 안 받음
+						if(i!=idx) {
+							if(map[r+dr[d]][c+dc[d]]==1) {
+								dmg[i]++;
+								dp++;
+							}
 						}
 					}
 				}
@@ -237,15 +182,6 @@ public class Main {
 		}
 		return false;
 	}
-
-	private static void print(int[][] map) {
-		for(int r=0; r<map.length; r++) {
-			for(int c=0; c<map[r].length; c++) {
-				System.out.print(map[r][c]+" ");
-			}
-			System.out.println();
-		}
-	}
 	
 	static class Knight {
 		int r; 
@@ -261,11 +197,6 @@ public class Main {
 			this.h = h;
 			this.w = w;
 			this.hp = hp;
-		}
-
-		@Override
-		public String toString() {
-			return "Knight [r=" + r + ", c=" + c + ", h=" + h + ", w=" + w + ", hp=" + hp + "]";
 		}
 	}
 }
