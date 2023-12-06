@@ -59,7 +59,7 @@ public class Main {
 			int d = Integer.parseInt(st.nextToken());
 			
 			//죽은 친구는 그냥 넘어가
-			if(knights[idx].hp==0) continue;
+			if(knights[idx].hp<=0) continue;
 			
 			//1. 왕의 명령 받은 기사 이동
 			move = new boolean[N+1];
@@ -70,7 +70,7 @@ public class Main {
 		//총 받은 데미지 합 출력
 		int result = 0;
 		for(int i=1; i<=N; i++) {
-			if(knights[i].hp!=0) result += dmg[i];
+			if(knights[i].hp>0) result += dmg[i];
 		}
 		System.out.println(result);
 	}
@@ -218,7 +218,7 @@ public class Main {
 		kn.hp -= dmg[idx];
 		
 		//죽었으면 맵에서 없애주기
-		if(kn.hp==0) {
+		if(kn.hp<=0) {
 			for(int r=kn.r; r<kn.r+kn.h; r++) {
 				for(int c=kn.c; c<kn.c+kn.w; c++) {
 					kmap[r][c] = 0;
