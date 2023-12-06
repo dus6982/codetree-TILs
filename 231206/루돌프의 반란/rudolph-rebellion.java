@@ -331,22 +331,12 @@ public class Main {
 	}
 
 	private static void updateInfoSanta(Santa santa, int nr, int nc, int d, boolean crash) {
-		int idx = 0;
-		for(int i=0; i<santas.size(); i++) {
-			if(santas.get(i) == santa) {
-				idx = i;
-				break;
-			}
-		}
-		
-		Santa s = null;
-		if(crash) {
-			s = new Santa(santa.idx, nr, nc, d, true, M-2, false);
-		} else {
-			s = new Santa(santa.idx, nr, nc, d, santa.faint, santa.turn, false);
-		}
-		
-		santas.set(idx, s);
+		santa.r = nr; santa.c = nc; santa.direct = d;
+
+        if(crash) {
+            santa.faint = true;
+            santa.turn = M-2;
+        }
 	}
 
 	private static boolean check(int nr, int nc) {
