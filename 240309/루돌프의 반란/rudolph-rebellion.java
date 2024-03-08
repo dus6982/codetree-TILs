@@ -275,8 +275,7 @@ public class Main {
 		}
 			
 //		int mr = r+drR[d]; int mc = c+dcR[d]; 
-		int mr = r+dr; int mc = c+dc; 
-		System.out.println("r:"+mr+" c:"+mc);
+		int mr = r+dr; int mc = c+dc;
 		
 		if(!check(mr, mc)) {
 			//연쇄 없이 범위를 벗어나서 죽어
