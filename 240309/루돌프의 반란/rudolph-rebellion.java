@@ -89,6 +89,65 @@ public class Main {
 			System.out.print(score[i]+" ");
 		}
 	}
+	
+	private static Santa findNearSanta() {
+		//산타list에서 현재 루돌프와 가장 가까운 산타를 찾아야 함
+		int minD = N*N+N*N; 
+		Santa near = null;
+		int r = -1; int c = -1;
+		
+		for(int i=0; i<list.size(); i++) {
+			if(die[list.get(i).idx]) continue;
+			
+			int dist = (int) (Math.pow((rdpR-list.get(i).r), 2)
+					+ Math.pow((rdpC-list.get(i).c), 2));
+					
+			//가깝지 않다면 다음 산타로 넘어가
+			if(minD < dist) continue;
+			//r좌표가 더 크지 않다면 다음 산타로 넘어가
+			if(minD == dist && (r > list.get(i).r 
+					|| (r == list.get(i).r && c > list.get(i).c))) continue;
+
+			minD = dist;
+			r = list.get(i).r; c = list.get(i).c;
+			near = list.get(i);
+		}
+		
+		return near;
+	}
+	
+	private static void rdpMove(Santa near) {
+		//루돌프의 8방향칸 중 제일 가까워지는 칸 찾기
+		int moveR = 0; int moveC = 0;
+		int dist = (int) (Math.pow((rdpR-near.r), 2)
+				+ Math.pow((rdpC-near.c), 2));
+		
+		//1칸만 이동하는 거라 8칸만 보기
+		for(int d=0; d<8; d++) {
+			int nr = rdpR+drR[d];
+			int nc = rdpC+dcR[d];
+			
+			if(!check(nr, nc)) continue;
+			
+			int dt = (int) (Math.pow((nr-near.r), 2)
+					+ Math.pow((nc-near.c), 2));
+			
+			if(dist > dt) {
+				dist = dt;
+				moveR = nr; moveC = nc; 
+				rdpD = d;
+			}
+		}
+		
+		//루돌프가 이동할 칸에 산타가 있다면 충돌
+		if(map[moveR][moveC] != 0) {
+			collisionRdp(moveR, moveC);
+		} 
+		
+		map[rdpR][rdpC] = 0;
+		map[moveR][moveC] = -1;
+		rdpR = moveR; rdpC = moveC;
+	}
 
 	private static void santaMove() {
 		for(int i=0; i<list.size(); i++) {
@@ -144,86 +203,7 @@ public class Main {
 			}
 		}
 	}
-
-	private static void collisionSanta(Santa santa, int direct) {
-		//루돌프가 움직여서 충돌이 일어난 경우
-		//산타 D 점수 획득
-		score[santa.idx] += D;
-		
-		//자신이 온 반대방향대로 D칸 밀려남
-		//산타는 자신이 이동한 반대 방향으로 D칸 만큼 이동
-		int nr = rdpR-drS[direct]*D;
-		int nc = rdpC-dcS[direct]*D;
-
-        //루돌프와 충돌한 산타 기절
-		santa.faint = true;
-		santa.turn = M-2;
-		
-		//밀려나는 자리가 원래 있던 자리라면 이동할 필요 없음
-		if(nr==santa.r && nc==santa.c) return;
-		
-		//범위 벗어나면 산타 die
-		if(!check(nr, nc)) {
-			live--;
-			die[santa.idx] = true;
-			map[santa.r][santa.c] = 0;
-		} else {
-			//충돌 후 착지하게 되는 칸이 빈 칸이면 바로 이동 가능
-			if(map[nr][nc] == 0) {
-				map[nr][nc] = santa.idx;
-				map[santa.r][santa.c] = 0;
-				santa.r = nr; santa.c = nc; santa.d = direct;
-			} else { //충돌 후 착지하게 되는 칸에 다른 산타가 있다면
-				//해당 방향으로 연쇄적으로 1칸씩 밀려남
-				chainReaction(nr, nc, direct, false);
-				
-				//이제 충돌당한 산타를 착지 시켜주자
-				map[nr][nc] = santa.idx;
-				map[santa.r][santa.c] = 0;
-				santa.r = nr; santa.c = nc; santa.d = direct;
-			}
-		}
-	}
-
-	private static void rdpMove(Santa near) {
-		//루돌프의 8방향칸 중 제일 가까워지는 칸 찾기
-		int moveR = 0; int moveC = 0;
-		int dist = (int) (Math.pow((rdpR-near.r), 2)
-				+ Math.pow((rdpC-near.c), 2));
-		
-		//1칸만 이동하는 거라 8칸만 보기
-		for(int d=0; d<8; d++) {
-			int nr = rdpR+drR[d];
-			int nc = rdpC+dcR[d];
-			
-			if(!check(nr, nc)) continue;
-			
-			int dt = (int) (Math.pow((nr-near.r), 2)
-					+ Math.pow((nc-near.c), 2));
-			
-			if(dist > dt) {
-				dist = dt;
-				moveR = nr; moveC = nc; 
-				rdpD = d;
-			}
-		}
-		
-		//루돌프가 이동할 칸에 산타가 있다면 충돌
-		if(map[moveR][moveC] != 0) {
-			collisionRdp(moveR, moveC);
-		} 
-		
-		map[rdpR][rdpC] = 0;
-		map[moveR][moveC] = -1;
-		rdpR = moveR; rdpC = moveC;
-	}
-
-	private static boolean check(int nr, int nc) {
-		if(nr>=0 && nr<N && nc>=0 && nc<N) return true;
-		
-		return false;
-	}
-
+	
 	private static void collisionRdp(int moveR, int moveC) {
 		//루돌프가 움직여서 충돌이 일어난 경우
 		//산타 C 점수 획득
@@ -232,7 +212,7 @@ public class Main {
 		
 		//루돌프의 방향대로 C칸 밀려남
 		//밀려나면 정보를 수정해야하니 움직이게 될 산타의 정보를 가져오자
-		Santa santa = findInfoSanta(idx);
+		Santa santa = list.get(idx-1);
 
 		//루돌프와 충돌한 산타 기절
 		santa.faint = true;
@@ -260,6 +240,42 @@ public class Main {
 			map[nr][nc] = idx;
 			map[santa.r][santa.c] = 0;
 			santa.r = nr; santa.c = nc; santa.d = rdpD;
+		}
+	}
+
+	private static void collisionSanta(Santa santa, int direct) {
+		//루돌프가 움직여서 충돌이 일어난 경우
+		//산타 D 점수 획득
+		score[santa.idx] += D;
+		
+		//자신이 온 반대방향대로 D칸 밀려남
+		//산타는 자신이 이동한 반대 방향으로 D칸 만큼 이동
+		int nr = rdpR-drS[direct]*D;
+		int nc = rdpC-dcS[direct]*D;
+		
+		//루돌프와 충돌한 산타 기절
+		santa.faint = true;
+		santa.turn = M-2;
+		
+		//밀려나는 자리가 원래 있던 자리라면 이동할 필요 없음
+		if(nr==santa.r && nc==santa.c) return;
+		
+		//범위 벗어나면 산타 die
+		if(!check(nr, nc)) {
+			live--;
+			die[santa.idx] = true;
+			map[santa.r][santa.c] = 0;
+		} else {
+			//충돌 후 착지하게 되는 칸이 빈 칸이면 바로 이동 가능
+			if(map[nr][nc] != 0) {//충돌 후 착지하게 되는 칸에 다른 산타가 있다면
+				//해당 방향으로 연쇄적으로 1칸씩 밀려남
+				chainReaction(nr, nc, direct, false);
+			}
+			
+			//이제 충돌당한 산타를 착지 시켜주자
+			map[nr][nc] = santa.idx;
+			map[santa.r][santa.c] = 0;
+			santa.r = nr; santa.c = nc; santa.d = direct;
 		}
 	}
 
@@ -301,63 +317,18 @@ public class Main {
 				map[mr][mc] = idx;
 				
 				//이동한 좌표 정보 수정
-				updateSantaInfo(idx, mr, mc, d);
+				Santa santa = list.get(idx-1);
+				santa.r = mr; santa.c = mc; santa.d = d;
 
 				mr -= dr; mc -= dc;
 			}
 		}
 	}
 
-	private static void updateSantaInfo(int idx, int r, int c, int d) {
-		Santa santa = list.get(idx-1);
-		santa.r = r; santa.c = c; santa.d = d;
-		// for(int i=0; i<list.size(); i++) {
-		// 	if(list.get(i).idx == idx) {
-		// 		Santa santa = list.get(i);
-		// 		santa.r = r; santa.c = c; santa.d = d;
-		// 		break;
-		// 	}
-		// }
-	}
-
-	private static Santa findInfoSanta(int idx) {
-		Santa santa = null;
+	private static boolean check(int nr, int nc) {
+		if(nr>=0 && nr<N && nc>=0 && nc<N) return true;
 		
-		for(int i=0; i<list.size(); i++) {
-			if(list.get(i).idx == idx) {
-				santa = list.get(i);
-				break;
-			}
-		}
-		
-		return santa;
-	}
-
-	private static Santa findNearSanta() {
-		//산타list에서 현재 루돌프와 가장 가까운 산타를 찾아야 함
-		int minD = N*N+N*N; 
-		Santa near = null;
-		int r = -1; int c = -1;
-		
-		for(int i=0; i<list.size(); i++) {
-			if(die[list.get(i).idx]) continue;
-			
-			int dist = (int) (Math.pow((rdpR-list.get(i).r), 2)
-					+ Math.pow((rdpC-list.get(i).c), 2));
-					
-			//가깝지 않다면 다음 산타로 넘어가
-			if(minD < dist) continue;
-			//r좌표가 더 크지 않다면 다음 산타로 넘어가
-			if(minD == dist) {
-				if(r>list.get(i).r || (r==list.get(i).r && c>list.get(i).c)) continue;
-			}
-			
-			minD = dist;
-			r = list.get(i).r; c = list.get(i).c;
-			near = list.get(i);
-		}
-		
-		return near;
+		return false;
 	}
 
 	static class Santa implements Comparable<Santa>{
