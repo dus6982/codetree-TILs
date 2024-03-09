@@ -252,11 +252,6 @@ public class Main {
 				//충돌 후 착지하게 되는 칸에 다른 산타가 있다면
 				//해당 방향으로 연쇄적으로 1칸씩 밀려남
 				chainReaction(nr, nc, rdpD, true);
-				
-//				//이제 충돌당한 산타를 착지 시켜주자
-//				map[nr][nc] = idx;
-////				map[santa.r][santa.c] = 0;
-////				santa.r = nr; santa.c = nc; santa.d = rdpD;
 			}
 			
 			//충돌 후 착지하게 되는 칸이 빈 칸이면 바로 이동 가능
@@ -314,15 +309,15 @@ public class Main {
 	}
 
 	private static void updateSantaInfo(int idx, int r, int c, int d) {
-//		Santa santa = list.get(idx-1);
-//		santa.r = r; santa.c = c; santa.d = d;
-		for(int i=0; i<list.size(); i++) {
-			if(list.get(i).idx == idx) {
-				Santa santa = list.get(i);
-				santa.r = r; santa.c = c; santa.d = d;
-				break;
-			}
-		}
+		Santa santa = list.get(idx-1);
+		santa.r = r; santa.c = c; santa.d = d;
+		// for(int i=0; i<list.size(); i++) {
+		// 	if(list.get(i).idx == idx) {
+		// 		Santa santa = list.get(i);
+		// 		santa.r = r; santa.c = c; santa.d = d;
+		// 		break;
+		// 	}
+		// }
 	}
 
 	private static Santa findInfoSanta(int idx) {
