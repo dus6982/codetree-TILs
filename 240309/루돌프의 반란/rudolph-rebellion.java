@@ -154,6 +154,10 @@ public class Main {
 		//산타는 자신이 이동한 반대 방향으로 D칸 만큼 이동
 		int nr = rdpR-drS[direct]*D;
 		int nc = rdpC-dcS[direct]*D;
+
+        //루돌프와 충돌한 산타 기절
+		santa.faint = true;
+		santa.turn = M-2;
 		
 		//밀려나는 자리가 원래 있던 자리라면 이동할 필요 없음
 		if(nr==santa.r && nc==santa.c) return;
@@ -164,10 +168,6 @@ public class Main {
 			die[santa.idx] = true;
 			map[santa.r][santa.c] = 0;
 		} else {
-			//루돌프와 충돌한 산타 기절
-			santa.faint = true;
-			santa.turn = M-2;
-			
 			//충돌 후 착지하게 되는 칸이 빈 칸이면 바로 이동 가능
 			if(map[nr][nc] == 0) {
 				map[nr][nc] = santa.idx;
