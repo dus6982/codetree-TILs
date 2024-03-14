@@ -129,7 +129,8 @@ public class Main {
 		
 		kmap = new int[L][L];
 		for(int idx=1; idx<=N; idx++) {
-			mark(idx);
+			if(!knights[idx].die)
+				mark(idx);
 		}
 	}
 
