@@ -150,6 +150,7 @@ public class Main {
 				//다른 기사가 있다면 해당 기사도 이동 가능한지 확인해주기
 				else if(kmap[nr][nc] > 0){
 					if(series(kmap[nr][nc], direct)) cnt++;
+					else return false;
 				}
 			}
 		}
@@ -180,6 +181,7 @@ public class Main {
 				//다른 기사가 있다면 연쇄 확인해주기
 				else if(kmap[nr][nc] > 0){
 					if(series(kmap[nr][nc], direct)) cnt++;
+					else return false;
 				}
 				
 			}
