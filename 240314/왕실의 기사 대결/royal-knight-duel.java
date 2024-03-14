@@ -143,7 +143,7 @@ public class Main {
 				int nr = i+dr[direct];
 				int nc = j+dc[direct];
 				
-				if(!check(nr,nc) || map[nr][nc]==wall) continue; //범위 or 벽
+				if(!check(nr,nc) || map[nr][nc]==wall) return false; //범위 or 벽
 				
 				//자기 자신이거나 0이거나
 				if(kmap[nr][nc] == idx || kmap[nr][nc] == 0) cnt++;
@@ -173,7 +173,7 @@ public class Main {
 				int nr = i+dr[direct];
 				int nc = j+dc[direct];
 				
-				if(!check(nr,nc) || map[nr][nc]==wall) continue; //범위 
+				if(!check(nr,nc) || map[nr][nc]==wall) return false; //범위 
 				
 				//자기 자신이거나 0이거나
 				if(kmap[nr][nc] == idx || kmap[nr][nc] == 0) cnt++;
