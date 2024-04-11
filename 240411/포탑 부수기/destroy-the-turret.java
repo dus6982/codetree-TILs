@@ -8,13 +8,14 @@ import java.util.Queue;
 import java.util.StringTokenizer;
 
 public class Main {
-	static int N, M, K;
+	static int N, M, K, turn;
 	static int[][] map;
 	static ArrayList<Turret> list; //포탑 정보
 	static boolean[][] visit; //방문 여부
 	static int[][] backR; //지나온 경로 저장하기 
 	static int[][] backC;
 	static boolean[][] attack; //공격 영향 여부
+	static int[][] time;
 	//					우 하 좌 상 (4방) / 우상 우하 좌하 좌상 (8방)
 	static int[] dr = {0, 1, 0, -1, -1, 1, 1, -1};
 	static int[] dc = {1, 0, -1, 0, 1, 1, -1, -1};
@@ -28,6 +29,7 @@ public class Main {
 		K = Integer.parseInt(st.nextToken());
 		
 		map = new int[N][M];
+		time = new int[N][M];
 		
 		for(int r=0; r<N; r++) {
 			st = new StringTokenizer(br.readLine());
@@ -37,12 +39,14 @@ public class Main {
 		}
 
 		while(K-- > 0) {
+			turn++;
+			
 			//살아있는 포탑 정리
 			list = new ArrayList<>();
 			for(int r=0; r<N; r++) {
 				for(int c=0; c<M; c++) {
 					if(map[r][c]>0) 
-						list.add(new Turret(r, c, map[r][c], K+1));
+						list.add(new Turret(r, c, map[r][c], time[r][c]));
 				}
 			}
 			
@@ -57,30 +61,28 @@ public class Main {
 			//공격한 턴, 공격 영향 반영
 			Collections.sort(list);
 			
-			list.get(0).power += N+M;
 			map[list.get(0).r][list.get(0).c] += N+M;
-			list.get(0).time = K;
+			list.get(0).power = map[list.get(0).r][list.get(0).c];
+
+			time[list.get(0).r][list.get(0).c] = turn;
+			list.get(0).time = time[list.get(0).r][list.get(0).c];
+			
 			attack[list.get(0).r][list.get(0).c] = true; //영향 안 받기
 			
 			//레이저 공격
 			boolean isPossible = laserAttack();
 			//레이저 공격 못하면 포탄 공격
 			if(!isPossible) bombAttack();
-
-			//살아있는 포탑이 1개 이하라면 바로 종료
-			if(list.size()<=1) break;
 			
 			//정비 : 공격 관여하지 않은 살아있는 포탑 공격력 +1 해주기
 			maintain();
 		}
 		
 		int answer = 0;
-		for(int i=0; i<list.size(); i++) {
-			Turret t = list.get(i);
-
-			if(map[t.r][t.c]==0) continue;
-			
-			answer = Math.max(answer, map[t.r][t.c]);
+		for(int r=0; r<N; r++) {
+			for(int c=0; c<M; c++) {
+				answer = Math.max(answer, map[r][c]);
+			}
 		}
 		System.out.println(answer);
 	}
@@ -157,8 +159,10 @@ public class Main {
 				int nc = (c+dc[d]+M)%M;	
 				
 				//방문 했으면 넘어가 or 부서진 포탑이면 넘어가
-				if(visit[nr][nc] || map[nr][nc]==0) continue;
+				if(visit[nr][nc]) continue;
 
+				if(map[nr][nc]==0) continue;
+				
 				q.add(new int[] {nr, nc});
 				visit[nr][nc] = true;
 				
@@ -203,19 +207,6 @@ public class Main {
 		return possible;
 	}
 
-	private static void removeTurret(int r, int c) {
-		int idx = 0;
-		for(int i=0; i<list.size(); i++) {
-			if(list.get(i).r==r && list.get(i).c==c) {
-				System.out.println("부서지는 포탑 r:"+list.get(i).r+",c:"+list.get(i).c);
-				idx = i;
-				break;
-			}
-		}
-		
-		list.remove(idx);
-	}
-
 	static class Turret implements Comparable<Turret>{
 		int r;
 		int c;
@@ -235,7 +226,7 @@ public class Main {
 			//공격력 가장 낮은 애
 			if(this.power != o.power) return this.power - o.power;
 			//가장 최근에 공격한 애 (time의 수가 작은 애)
-			if(this.time != o.time) return this.time - o.time;
+			if(this.time != o.time) return o.time - this.time;
 			//행과 열의 합이 가장 큰 애
 			if(this.r+this.c != o.r+o.c) return (o.r+o.c) - (this.r+this.c);
 			//열 값이 가장 큰 애
