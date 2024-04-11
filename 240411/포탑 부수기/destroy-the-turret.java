@@ -112,6 +112,7 @@ public class Main {
 		for(int i=0; i<list.size(); i++) {
 			if(list.get(i).r==r && list.get(i).c==c) {
 				list.get(i).power = map[r][c];
+                return;
 			}
 		}
 	}
