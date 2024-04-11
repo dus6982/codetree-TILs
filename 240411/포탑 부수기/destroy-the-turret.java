@@ -15,7 +15,6 @@ public class Main {
 	static int[][] backR; //지나온 경로 저장하기 
 	static int[][] backC;
 	static boolean[][] attack; //공격 영향 여부
-	static boolean[][] die; //부서짐 여부
 	//					우 하 좌 상 (4방) / 우상 우하 좌하 좌상 (8방)
 	static int[] dr = {0, 1, 0, -1, -1, 1, 1, -1};
 	static int[] dc = {1, 0, -1, 0, 1, 1, -1, -1};
@@ -29,41 +28,44 @@ public class Main {
 		K = Integer.parseInt(st.nextToken());
 		
 		map = new int[N][M];
-		list = new ArrayList<>();
 		
 		for(int r=0; r<N; r++) {
 			st = new StringTokenizer(br.readLine());
 			for(int c=0; c<M; c++) {
 				map[r][c] = Integer.parseInt(st.nextToken());
-				
-				if(map[r][c]>0) list.add(new Turret(r, c, map[r][c], K));
 			}
 		}
 
 		while(K-- > 0) {
+			//살아있는 포탑 정리
+			list = new ArrayList<>();
+			for(int r=0; r<N; r++) {
+				for(int c=0; c<M; c++) {
+					if(map[r][c]>0) 
+						list.add(new Turret(r, c, map[r][c], K+1));
+				}
+			}
+			
+			//살아있는 포탑이 1개 이하라면 바로 종료
+			if(list.size() <= 1) break;
+			
+			attack = new boolean[N][M];
+			
 			//공격자 선정하기 위해 정렬해주기
 			//0번째가 공격자, list.size()-1번째가 희생자
 			//공격자는 힘이 자신의 원래 힘 + (N+M) 됨
 			//공격한 턴, 공격 영향 반영
 			Collections.sort(list);
 			
-			attack = new boolean[N][M];
-			die = new boolean[N][M];
-			
 			list.get(0).power += N+M;
-			list.get(0).time = K;
 			map[list.get(0).r][list.get(0).c] += N+M;
+			list.get(0).time = K;
 			attack[list.get(0).r][list.get(0).c] = true; //영향 안 받기
 			
 			//레이저 공격
-			backR = new int[N][M];
-			backC = new int[N][M];
 			boolean isPossible = laserAttack();
 			//레이저 공격 못하면 포탄 공격
 			if(!isPossible) bombAttack();
-			
-			//부서짐
-			destroy();
 
 			//살아있는 포탑이 1개 이하라면 바로 종료
 			if(list.size()<=1) break;
@@ -75,24 +77,12 @@ public class Main {
 		int answer = 0;
 		for(int i=0; i<list.size(); i++) {
 			Turret t = list.get(i);
-			
+
 			if(map[t.r][t.c]==0) continue;
 			
 			answer = Math.max(answer, map[t.r][t.c]);
 		}
 		System.out.println(answer);
-	}
-
-	private static void destroy() {
-		for(int r=0; r<N; r++) {
-			for(int c=0; c<M; c++) {
-				if(die[r][c]) {
-					removeTurret(r,c);
-				}
-				
-				if(list.size()==0) return;
-			}
-		}
 	}
 
 	private static void maintain() {
@@ -103,35 +93,20 @@ public class Main {
                     continue;
                 
                 map[r][c]++;
-                modify(r,c);
             }
         }
 	}
 
-	private static void modify(int r, int c) {
-		for(int i=0; i<list.size(); i++) {
-			if(list.get(i).r==r && list.get(i).c==c) {
-				list.get(i).power = map[r][c];
-                return;
-			}
-		}
-	}
-
 	private static void bombAttack() {
-		die = new boolean[N][M];
-		
 		Turret attacker = list.get(0); // 가장 약한 공격자
 		Turret victim = list.get(list.size()-1); //가장 강한 희생자
 		
 		//희생자 데미지
 		map[victim.r][victim.c] -= attacker.power;
 		//포탑이 부서지면 부서짐 반영
-		if(map[victim.r][victim.c]<=0) {
+		if(map[victim.r][victim.c]<0) 
 			map[victim.r][victim.c] = 0;
-			die[victim.r][victim.c] = true;
-		} 
 		attack[victim.r][victim.c] = true; //공격 영향 표시
-		victim.power = map[victim.r][victim.c];
 		
 		for(int d=0; d<8; d++) {
 			int nr = (victim.r+dr[d]+N)%N;
@@ -146,19 +121,19 @@ public class Main {
 			
 			map[nr][nc] -= attacker.power/2;
 			//포탑이 부서지면 부서짐 반영
-			if(map[nr][nc]<=0) {
+			if(map[nr][nc]<0)
 				map[nr][nc] = 0;
-				die[nr][nc] = true;
-			} else modify(nr, nc);
 			attack[nr][nc] = true; //공격 영향 표시
 		}
 	}
 
 	private static boolean laserAttack() {
+		visit = new boolean[N][M];
+		backR = new int[N][M];
+		backC = new int[N][M];
+		
 		Turret attacker = list.get(0);
 		Turret victim = list.get(list.size()-1);
-		
-		visit = new boolean[N][M];
 		
 		Queue<int[]> q = new LinkedList<>();
 		q.add(new int[] {attacker.r, attacker.c});
@@ -181,12 +156,9 @@ public class Main {
 				int nr = (r+dr[d]+N)%N;
 				int nc = (c+dc[d]+M)%M;	
 				
-				//방문 했으면 넘어가
-				if(visit[nr][nc]) continue;
-				
-				//부서진 포탑 x
-				if(map[nr][nc]==0) continue;
-				
+				//방문 했으면 넘어가 or 부서진 포탑이면 넘어가
+				if(visit[nr][nc] || map[nr][nc]==0) continue;
+
 				q.add(new int[] {nr, nc});
 				visit[nr][nc] = true;
 				
@@ -202,12 +174,9 @@ public class Main {
 			map[victim.r][victim.c] -= attacker.power;
 			
 			//포탑이 부서지면 부서짐 반영
-			if(map[victim.r][victim.c]<=0) {
+			if(map[victim.r][victim.c]<0)
 				map[victim.r][victim.c] = 0;
-				die[victim.r][victim.c] = true;
-			} 
 			attack[victim.r][victim.c] = true; //공격 영향 표시
-			victim.power = map[victim.r][victim.c];
 			
 			//기존 경로 역추적
 			//지나온 경로에 있는 포탑은 (공격자힘/2)만큼 데미지 입음
@@ -218,10 +187,8 @@ public class Main {
 				map[cr][cc] -= attacker.power/2;
 				
 				//포탑이 부서지면 부서짐 반영
-				if(map[cr][cc]<=0) {
+				if(map[cr][cc]<0) 
 					map[cr][cc] = 0;
-					die[cr][cc] = true;
-				} else modify(cr, cc); //부서지지 않았으면 list 정보 수정
 				attack[cr][cc] = true; //공격 영향 표시
 				
 				//다음 좌표로 이동
@@ -240,6 +207,7 @@ public class Main {
 		int idx = 0;
 		for(int i=0; i<list.size(); i++) {
 			if(list.get(i).r==r && list.get(i).c==c) {
+				System.out.println("부서지는 포탑 r:"+list.get(i).r+",c:"+list.get(i).c);
 				idx = i;
 				break;
 			}
