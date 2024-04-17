@@ -116,13 +116,14 @@ public class Main {
 			
 			for(int i=0; i<=p.rt; i++) {
 				tmp = rotate(map, p.r, p.c);
-			}
-			
-			for(int r=0; r<5; r++) {
-				for(int c=0; c<5; c++) {
-					map[r][c] = tmp[r][c];
+				for(int r=0; r<5; r++) {
+					for(int c=0; c<5; c++) {
+						map[r][c] = tmp[r][c];
+					}
 				}
 			}
+			
+			
 		}
 		
 		boolean[][] visit = new boolean[5][5];
