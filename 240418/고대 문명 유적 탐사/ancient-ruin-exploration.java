@@ -300,9 +300,9 @@ public class Main {
 			//회전 각도 가장 작은
 			if(this.rt != o.rt) return this.rt - o.rt;
 			//회전 중심 열 좌표 가장 작은
-			if(this.r != o.r) return this.r - o.r;
+			if(this.c != o.c) return this.c - o.c;
 			//회전 중심 행 좌표 가장 작은
-			return this.c - o.c;
+			return this.r - o.r;
 		}
 	}
 }
